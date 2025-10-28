@@ -108,16 +108,6 @@ Unit and integration tests ensure system stability without incurring AI usage co
 
 ---
 
-## 🎨 UI Preview
-
-<p align="center">
-  <img src="HealthTriageAI.Web/public/preview.png" alt="HealthTriageAI Preview" width="800"/>
-</p>
-
-The interface mimics a real triage control room — each patient card updates live as the AI agents collaborate to process the case.
-
----
-
 ## ⚠️ Guarantees
 
 Before starting, you have to create a new file in HealthTriageAI.ApiService project named "appsettings.json", and put this value inside:
