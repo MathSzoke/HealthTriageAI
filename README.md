@@ -38,9 +38,9 @@ All this happens live in the UI through a **SignalR hub**, showing how the case 
 
 | Layer | Technologies |
 |:--|:--|
-| **Backend** | .NET 9 + Microsoft Agent Framework + SignalR |
+| **Backend** | .NET 10 + Microsoft Agent Framework + SignalR |
 | **Frontend** | React + Fluent UI + Vite |
-| **AI Connectors** | OpenAI (GPT for Production) / Ollama (Local Dev) |
+| **AI Connectors** | OpenAI (GPT) |
 | **Testing** | xUnit + custom hub capture for SignalR calls |
 | **Architecture** | Clean Architecture with service orchestration pattern |
 
@@ -62,15 +62,9 @@ src/
  │                                   - Responsive layout with filtering and search
  │                                   - Connects directly to SignalR hub
  │
- ├─ HealthTriageAI.Tests/           → Automated Tests (xUnit)
- │                                   - Unit tests for RiskAgent, SpecialistAgent, TriageCoordinator
- │                                   - Custom fake hub context for SignalR message capture
- │
- ├─ HealthTriageAI.Domain/          → Core enums and shared abstractions
- │                                   - TriageLevel, Specialist enums
- │                                   - Common DTOs (TriageInput, TriageCase)
- │
- └─ HealthTriageAI.SharedKernel/    → (Optional) Common contracts, Result<T>, Error, etc.
+ └─ HealthTriageAI.Tests/           → Automated Tests (xUnit)
+                                     - Unit tests for RiskAgent, SpecialistAgent, TriageCoordinator
+                                     - Custom fake hub context for SignalR message capture
 ```
 
 ---
@@ -121,6 +115,31 @@ Unit and integration tests ensure system stability without incurring AI usage co
 </p>
 
 The interface mimics a real triage control room — each patient card updates live as the AI agents collaborate to process the case.
+
+---
+
+## ⚠️ Guarantees
+
+Before starting, you have to create a new file in HealthTriageAI.ApiService project named "appsettings.json", and put this value inside:
+
+```json
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "OpenAI": {
+    "ApiKey": "<ApiKey>",
+    "Model": "gpt-4o-mini"
+  }
+}
+```
+
+Please, make sure you go change "<ApiKey>" for your real api key from OpenAI, follow site to get it:
+[OpenAI Api keys](https://platform.openai.com/api-keys)
 
 ---
 
