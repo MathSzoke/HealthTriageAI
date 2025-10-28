@@ -1,0 +1,17 @@
+bin/
+obj/
+pub/
+dist/
+build/
+.aspire/
+.idea/
+.vscode/
+node_modules/
+.vs/
+.azure/
+Portfolio.sln.DotSettings.user
+*.zip
+appsettings.*.local.json
+appsettings.json
+.env
+.env.*
