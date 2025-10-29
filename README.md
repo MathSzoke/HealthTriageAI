@@ -1,7 +1,7 @@
 # 🩺 HealthTriage AI — Intelligent Medical Triage
 
 <p align="center">
-  <img src="healthtriageai.web/public/banner.png" alt="HealthTriageAI Banner" width="800"/>
+  <img src="https://healthtriage.mathszoke.com/banner.png" alt="HealthTriageAI Banner" width="800"/>
 </p>
 
 <p align="center">
