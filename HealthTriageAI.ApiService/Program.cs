@@ -2,7 +2,6 @@ using HealthTriageAI.ApiService.Hubs;
 using HealthTriageAI.ApiService.Orchestration;
 using HealthTriageAI.ApiService.Services;
 using HealthTriageAI.ApiService.Services.Abstractions;
-using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +9,7 @@ builder.Services.AddSignalR();
 builder.Services.AddCors();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "HealthTriage API", Version = "v1" }));
+builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<TriageCoordinator>();
 builder.Services.AddTransient<SymptomAgent>();
