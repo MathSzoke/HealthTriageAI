@@ -1,7 +1,5 @@
 <Solution>
-  <Folder Name="/Solution Items/">
-    <File Path="global.json" />
-  </Folder>
+  <Folder Name="/Solution Items/" />
   <Project Path="HealthTriageAI.ApiService/HealthTriageAI.ApiService.csproj" />
   <Project Path="HealthTriageAI.AppHost/HealthTriageAI.AppHost.csproj" />
   <Project Path="HealthTriageAI.ServiceDefaults/HealthTriageAI.ServiceDefaults.csproj" />
