@@ -6,12 +6,22 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var allowedOrigin = "https://healthtriage.mathszoke.com";
+
 builder.Services.AddSignalR();
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c => c.SwaggerDoc("v1", new OpenApiInfo { Title = "HealthTriage API", Version = "v1" }));
+builder.Services.AddCors(o =>
+{
+    o.AddPolicy("Cors", p =>
+        p.WithOrigins(allowedOrigin)
+         .AllowAnyHeader()
+         .AllowAnyMethod()
+         .AllowCredentials());
+});
 
-builder.Services.AddCors();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "HealthTriage API", Version = "v1" }));
 
 builder.Services.AddSingleton<TriageCoordinator>();
 builder.Services.AddTransient<SymptomAgent>();
@@ -19,19 +29,22 @@ builder.Services.AddTransient<RiskAgent>();
 builder.Services.AddTransient<SpecialistAgent>();
 builder.Services.AddTransient<IAdviceAgent, AdviceAgent>();
 builder.Services.AddTransient<IFirstAidAgent, FirstAidAgent>();
+
 var app = builder.Build();
 
-app.UseCors(_ => _.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.MapHub<TriageHub>("/hubs/triage");
+app.UseRouting();
+app.UseCors("Cors");
+
+app.MapHub<TriageHub>("/hubs/triage").RequireCors("Cors");
 
 app.MapPost("/api/triage/report", async (TriageInput input, TriageCoordinator coord) =>
 {
     var id = await coord.StartAsync(input);
     return Results.Ok(new { caseId = id });
-});
+}).RequireCors("Cors");
 
 app.Run();
 
