@@ -156,16 +156,6 @@ dotnet test
 
 ---
 
-## 🧭 Roadmap
-
-- [ ] Add multilingual support (EN/PT-BR)  
-- [ ] Add persistent triage history with EF Core  
-- [ ] Integrate Azure App Service deployment  
-- [ ] Add Docker support for full local environment  
-- [ ] Add OpenTelemetry traces for each agent step  
-
----
-
 ## 📫 Contact
 
 📧 **Email:** [matheusszoke@gmail.com](mailto:matheusszoke@gmail.com)  
