@@ -15,7 +15,10 @@ import {
     Tooltip,
     Popover,
     PopoverTrigger,
-    PopoverSurface
+    PopoverSurface,
+    MessageBar,
+    MessageBarTitle,
+    MessageBarBody
 } from '@fluentui/react-components'
 import {
     Dismiss24Regular,
@@ -26,6 +29,9 @@ import {
 import CaseForm from './Components/Case/Form/CaseForm.jsx'
 import CaseCard from './Components/Case/Card/CaseCard.jsx'
 import { levelToKey } from './utils/enums.js'
+
+const STORAGE_CASES_KEY = 'triage_cases'
+const STORAGE_DATE_KEY = 'triage_cases_date'
 
 const useStyles = makeStyles({
     root: {
@@ -99,16 +105,44 @@ const useStyles = makeStyles({
     }
 })
 
+function getTodayKey() {
+    const d = new Date()
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+}
+
 export default function App() {
     const s = useStyles()
     const [connStatus, setConnStatus] = useState('connecting')
-    const [cases, setCases] = useState([])
     const [filter, setFilter] = useState('all')
     const [q, setQ] = useState('')
     const [isMobile, setIsMobile] = useState(window.matchMedia('(max-width: 600px)').matches)
     const [tabsOpen, setTabsOpen] = useState(false)
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [cases, setCases] = useState(() => {
+        const stored = localStorage.getItem(STORAGE_CASES_KEY)
+        if (!stored) return []
+        try {
+            const parsed = JSON.parse(stored)
+            return Array.isArray(parsed) ? parsed : []
+        } catch {
+            return []
+        }
+    })
     const api = import.meta.env.VITE_API_BASE
     const map = useMemo(() => new Map(), [])
+
+    useEffect(() => {
+        const todayKey = getTodayKey()
+        const storedDate = localStorage.getItem(STORAGE_DATE_KEY)
+        if (storedDate !== todayKey) {
+            localStorage.setItem(STORAGE_DATE_KEY, todayKey)
+            localStorage.removeItem(STORAGE_CASES_KEY)
+            setCases([])
+        }
+    }, [])
 
     useEffect(() => {
         const media = window.matchMedia('(max-width: 600px)')
@@ -116,6 +150,21 @@ export default function App() {
         media.addEventListener('change', handler)
         return () => media.removeEventListener('change', handler)
     }, [])
+
+    useEffect(() => {
+        cases.forEach(c => {
+            if (c && c.id) {
+                map.set(c.id, c)
+            }
+        })
+        if (cases.length > 0) {
+            setCases(toSortedList(map))
+        }
+    }, [])
+
+    useEffect(() => {
+        localStorage.setItem(STORAGE_CASES_KEY, JSON.stringify(cases))
+    }, [cases])
 
     useEffect(() => {
         const c = new signalR.HubConnectionBuilder()
@@ -127,6 +176,7 @@ export default function App() {
             map.set(payload.id, payload)
             setCases(toSortedList(map))
         })
+
         c.on('case_step', step => {
             const item = map.get(step.id)
             if (!item) return
@@ -154,7 +204,16 @@ export default function App() {
         )
     }
 
-    function submitCase(form) {
+    async function submitCase(form) {
+        if (cases.length >= 3) {
+            return
+        }
+        if (isSubmitting) {
+            return
+        }
+
+        setIsSubmitting(true)
+
         const body = {
             name: form.name,
             age: Number(form.age),
@@ -164,11 +223,17 @@ export default function App() {
             systolicBP: form.systolicBP ? Number(form.systolicBP) : null,
             location: form.location
         }
-        fetch(`${api}/api/triage/report`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        })
+
+        try {
+            const result = await fetch(`${api}/api/triage/report`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+        } catch {
+        } finally {
+            setIsSubmitting(false)
+        }
     }
 
     const filtered = cases
@@ -266,7 +331,18 @@ export default function App() {
 
             <div className={s.content}>
                 <div className={s.left}>
-                    <CaseForm onSubmit={submitCase} />
+                    <CaseForm
+                        onSubmit={submitCase}
+                        connStatus={connStatus}
+                        countLimit={cases.length}
+                        isSubmitting={isSubmitting}
+                    />
+                    <MessageBar style={{ width: '400px' }} intent={"warning"}>
+                        <MessageBarBody>
+                            <MessageBarTitle>Limit reached</MessageBarTitle>
+                            I'm not rich yet, please wait until tomorrow to try again.
+                        </MessageBarBody>
+                    </MessageBar>
                 </div>
                 <div className={s.right}>
                     {connStatus === 'connecting' && <Spinner label="Connecting..." />}

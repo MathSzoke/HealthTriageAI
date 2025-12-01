@@ -10,7 +10,7 @@ public record TriageCase(
     double? Temperature,
     int? HeartRate,
     int? SystolicBP,
-    string Location,
+    string? Location,
     TriageLevel? Level,
     Specialist? Specialist,
     string Advice,

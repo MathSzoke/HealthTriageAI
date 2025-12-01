@@ -6,7 +6,7 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var allowedOrigin = "https://healthtriage.mathszoke.com";
+string[] allowedOrigin = ["http://localhost:5173", "https://healthtriage.mathszoke.com"];
 
 builder.Services.AddSignalR();
 
@@ -30,6 +30,8 @@ builder.Services.AddTransient<SpecialistAgent>();
 builder.Services.AddTransient<IAdviceAgent, AdviceAgent>();
 builder.Services.AddTransient<IFirstAidAgent, FirstAidAgent>();
 
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
 
 app.UseSwagger();
@@ -37,6 +39,8 @@ app.UseSwaggerUI();
 
 app.UseRouting();
 app.UseCors("Cors");
+
+app.MapHealthChecks("/health");
 
 app.MapHub<TriageHub>("/hubs/triage").RequireCors("Cors");
 
@@ -48,4 +52,4 @@ app.MapPost("/api/triage/report", async (TriageInput input, TriageCoordinator co
 
 app.Run();
 
-public record TriageInput(string Name, int Age, string Symptoms, double? Temperature, int? HeartRate, int? SystolicBP, string Location);
+public record TriageInput(string Name, int Age, string Symptoms, double? Temperature, int? HeartRate, int? SystolicBP, string? Location);
