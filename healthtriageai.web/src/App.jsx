@@ -337,12 +337,14 @@ export default function App() {
                         countLimit={cases.length}
                         isSubmitting={isSubmitting}
                     />
-                    <MessageBar style={{ width: '400px' }} intent={"warning"}>
-                        <MessageBarBody>
-                            <MessageBarTitle>Limit reached</MessageBarTitle>
-                            I'm not rich yet, please wait until tomorrow to try again.
-                        </MessageBarBody>
-                    </MessageBar>
+                    {cases.length >= 3 &&
+                        <MessageBar style={{ width: '400px' }} intent={"warning"}>
+                            <MessageBarBody>
+                                <MessageBarTitle>Limit reached</MessageBarTitle>
+                                I'm not rich yet, please wait until tomorrow to try again.
+                            </MessageBarBody>
+                        </MessageBar>
+                    }
                 </div>
                 <div className={s.right}>
                     {connStatus === 'connecting' && <Spinner label="Connecting..." />}
