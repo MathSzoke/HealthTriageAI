@@ -31,7 +31,6 @@ import CaseCard from './Components/Case/Card/CaseCard.jsx'
 import { levelToKey } from './utils/enums.js'
 
 const STORAGE_CASES_KEY = 'triage_cases'
-const STORAGE_DATE_KEY = 'triage_cases_date'
 
 const useStyles = makeStyles({
     root: {
@@ -105,12 +104,28 @@ const useStyles = makeStyles({
     }
 })
 
-function getTodayKey() {
-    const d = new Date()
+function getDateKey(d) {
     const y = d.getFullYear()
     const m = String(d.getMonth() + 1).padStart(2, '0')
     const day = String(d.getDate()).padStart(2, '0')
     return `${y}-${m}-${day}`
+}
+
+function getTodayKey() {
+    return getDateKey(new Date())
+}
+
+function getDateKeyFromString(value) {
+    if (!value) return ''
+    const d = new Date(value)
+    if (Number.isNaN(d.getTime())) return ''
+    return getDateKey(d)
+}
+
+function toSortedList(m) {
+    return Array.from(m.values()).sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    )
 }
 
 export default function App() {
@@ -126,7 +141,10 @@ export default function App() {
         if (!stored) return []
         try {
             const parsed = JSON.parse(stored)
-            return Array.isArray(parsed) ? parsed : []
+            if (!Array.isArray(parsed)) return []
+            return parsed.slice().sort(
+                (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+            )
         } catch {
             return []
         }
@@ -134,15 +152,13 @@ export default function App() {
     const api = import.meta.env.VITE_API_BASE
     const map = useMemo(() => new Map(), [])
 
-    useEffect(() => {
-        const todayKey = getTodayKey()
-        const storedDate = localStorage.getItem(STORAGE_DATE_KEY)
-        if (storedDate !== todayKey) {
-            localStorage.setItem(STORAGE_DATE_KEY, todayKey)
-            localStorage.removeItem(STORAGE_CASES_KEY)
-            setCases([])
-        }
-    }, [])
+    const todayKey = getTodayKey()
+
+    const todayCount = useMemo(
+        () =>
+            cases.filter(c => getDateKeyFromString(c.createdAt) === todayKey).length,
+        [cases, todayKey]
+    )
 
     useEffect(() => {
         const media = window.matchMedia('(max-width: 600px)')
@@ -152,15 +168,13 @@ export default function App() {
     }, [])
 
     useEffect(() => {
+        map.clear()
         cases.forEach(c => {
             if (c && c.id) {
                 map.set(c.id, c)
             }
         })
-        if (cases.length > 0) {
-            setCases(toSortedList(map))
-        }
-    }, [])
+    }, [cases, map])
 
     useEffect(() => {
         localStorage.setItem(STORAGE_CASES_KEY, JSON.stringify(cases))
@@ -196,16 +210,10 @@ export default function App() {
         return () => {
             c.stop()
         }
-    }, [api])
-
-    function toSortedList(m) {
-        return Array.from(m.values()).sort(
-            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-        )
-    }
+    }, [api, map])
 
     async function submitCase(form) {
-        if (cases.length >= 3) {
+        if (todayCount >= 3) {
             return
         }
         if (isSubmitting) {
@@ -225,7 +233,7 @@ export default function App() {
         }
 
         try {
-            const result = await fetch(`${api}/api/triage/report`, {
+            await fetch(`${api}/api/triage/report`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
@@ -245,6 +253,8 @@ export default function App() {
                     .toLowerCase()
                     .includes(q.toLowerCase())
         )
+
+    const visible = filtered.slice(0, 6)
 
     return (
         <div className={s.root}>
@@ -334,11 +344,11 @@ export default function App() {
                     <CaseForm
                         onSubmit={submitCase}
                         connStatus={connStatus}
-                        countLimit={cases.length}
+                        countLimit={todayCount}
                         isSubmitting={isSubmitting}
                     />
-                    {cases.length >= 3 &&
-                        <MessageBar style={{ width: '400px' }} intent={"warning"}>
+                    {todayCount >= 3 &&
+                        <MessageBar style={{ width: '400px' }} intent={'warning'}>
                             <MessageBarBody>
                                 <MessageBarTitle>Limit reached</MessageBarTitle>
                                 I'm not rich yet, please wait until tomorrow to try again.
@@ -349,7 +359,7 @@ export default function App() {
                 <div className={s.right}>
                     {connStatus === 'connecting' && <Spinner label="Connecting..." />}
                     <div className={s.list}>
-                        {filtered.map(c => (
+                        {visible.map(c => (
                             <CaseCard key={c.id} data={c} />
                         ))}
                     </div>
